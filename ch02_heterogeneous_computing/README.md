@@ -13,10 +13,10 @@
 
 读完本章，你应该能：
 
-- [ ] 理解什么是异构计算
-- [ ] 区分数据并行和任务并行
-- [ ] 理解 Host（CPU）和 Device（GPU）的关系
-- [ ] 写出第一个 CUDA 程序
+- [x] 理解什么是异构计算
+- [x] 区分数据并行和任务并行
+- [x] 理解 Host（CPU）和 Device（GPU）的关系
+- [x] 写出第一个 CUDA 程序（向量加法.cu）
 
 ---
 
@@ -127,10 +127,15 @@ Hello from CPU!
 
 完成后，确保你能回答：
 
-- [ ] `__global__` 是什么意思？
-- [ ] `<<<1, 8>>>` 中的两个数字分别代表什么？
-- [ ] `threadIdx.x` 是什么？
-- [ ] 为什么需要 `cudaDeviceSynchronize()`？
+- [x] `__global__` 是什么意思？
+是核函数的前缀，表示这个函数在 GPU 上执行，由 CPU 调用
+- [x] `<<<1, 8>>>` 中的两个数字分别代表什么？
+第一个是网格里的线程块数量，第二个是每个线程块里的线程数量
+- [x] `threadIdx.x` 是什么？
+是线程在其所属线程块内的局部 ID
+- [x] 为什么需要 `cudaDeviceSynchronize()`？
+因为 kernel 调用是异步的，CPU 不会等 GPU 执行完就继续往下跑。cudaDeviceSynchronize() 让 CPU 等待 GPU 完成所有任务
+
 
 ---
 
