@@ -3,23 +3,36 @@
 #include <cmath>        // 必须包含此头文件，否则 ceil 编不过去
 
 using namespace std;
+constexpr int TILE_SIZE = 16;
 
 __global__
 void gemm_kernal(int* a, int* b, int* c, int n1, int n2, int m)
 {
+    __shared__ int a_m[TILE_SIZE][TILE_SIZE];
+    __shared__ int b_m[TILE_SIZE][TILE_SIZE];
+
     // 逻辑没动，修正了大小写，这是 CUDA 的固定变量名
     int x = blockDim.x * blockIdx.x + threadIdx.x; 
     int y = blockDim.y * blockIdx.y + threadIdx.y;
 
-    if (x >= n2 || y >= n1) return;
-
-    int total = 0;
-    for(int i = 0; i < m; i++)
+    int times = (m + TILE_SIZE - 1) / TILE_SIZE;
+    int res = 0;
+    for(int i=0;i<times;i++)
     {
-        // 这里的逻辑很正，y * m 是找 A 的行，i * n2 是找 B 的列
-        total += a[y * m + i] * b[i * n2 + x];
+        if(y>=n1||threadIdx.x+i*TILE_SIZE>=m)a_m[threadIdx.y][threadIdx.x] = 0;
+        else a_m[threadIdx.y][threadIdx.x] = a[y*m+threadIdx.x+i*TILE_SIZE];
+        if (x>=n2||threadIdx.y+i*TILE_SIZE>=m)b_m[threadIdx.y][threadIdx.x] = 0;
+        else b_m[threadIdx.y][threadIdx.x] = b[(threadIdx.y+i*TILE_SIZE)*n2+x];
+        __syncthreads();
+
+        for(int j=0;j<TILE_SIZE;j++)
+        {
+            res+=a_m[threadIdx.y][j]*b_m[j][threadIdx.x];
+        }
+        __syncthreads();
     }
-    c[y * n2 + x] = total;
+    if(x<n2&&y<n1)c[y*n2+x] = res;
+        
 }
 
 void gemm(int* a, int* b, int* c, int n1, int n2, int m)
@@ -36,9 +49,9 @@ void gemm(int* a, int* b, int* c, int n1, int n2, int m)
     cudaMemcpy(b_d, b, m * n2 * sizeof(int), cudaMemcpyHostToDevice);
 
     // 计算 Grid 大小
-    dim3 d2(16, 16);
+    dim3 d2(TILE_SIZE, TILE_SIZE);
     // 这里 ceil 的用法对，但要确保除以 16.0 浮点数以保证精度
-    dim3 d1(ceil(n2 / 16.0), ceil(n1 / 16.0));
+    dim3 d1((n2 + TILE_SIZE - 1) / TILE_SIZE, (n1 + TILE_SIZE - 1) / TILE_SIZE);
 
     gemm_kernal<<<d1, d2>>>(a_d, b_d, c_d, n1, n2, m);
 
