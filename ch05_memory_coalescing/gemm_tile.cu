@@ -19,12 +19,24 @@ void gemm_kernal(int* a, int* b, int* c, int n1, int n2, int m)
     int res = 0;
     for(int i=0;i<times;i++)
     {
+        // A 是 row-major（n1 x m）：
+        // a[y*m + (i*TILE_SIZE + tx)] 让同一个 warp 的 tx 连续递增，
+        // 读取地址连续，global memory 更容易 coalesced。
         if(y>=n1||threadIdx.x+i*TILE_SIZE>=m)a_m[threadIdx.y][threadIdx.x] = 0;
         else a_m[threadIdx.y][threadIdx.x] = a[y*m+threadIdx.x+i*TILE_SIZE];
+
+        // B 在这个文件里按 row-major（m x n2）：
+        // b[(i*TILE_SIZE + ty)*n2 + x] 同理让 x 连续时地址连续，便于 coalesced。
+        //
+        // 你问“第二个矩阵如果按列存储是不是很难受”：是的，这里会别扭。
+        // 若 B 改成 column-major，直接写成 b[x*m + (i*TILE_SIZE + ty)]，
+        // 通常会让当前线程映射下的访存模式变差（不够连续/需要改线程映射），
+        // 所以常用做法是第六章那种 corner turning：加载到 shared 时做一次转置映射。
         if (x>=n2||threadIdx.y+i*TILE_SIZE>=m)b_m[threadIdx.y][threadIdx.x] = 0;
-        else b_m[threadIdx.y][threadIdx.x] = b[(threadIdx.y+i*TILE_SIZE)*n2+x];
+        else b_m[threadIdx.x][threadIdx.y] = b[threadIdx.x+i*tile_size][blockdim.x*blockidx.x+threadIdx.y] =  b[(blockdim.x*blockidx.x+threadIdx.y)*m+threadIdx.x+i*tile_size];
         __syncthreads();
 
+        // 这里用 shared memory 做 tile 内积，减少重复访问全局内存。
         for(int j=0;j<TILE_SIZE;j++)
         {
             res+=a_m[threadIdx.y][j]*b_m[j][threadIdx.x];
