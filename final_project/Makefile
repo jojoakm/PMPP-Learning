@@ -1,7 +1,10 @@
 # High-Performance GEMM Makefile
 
 NVCC = nvcc
-NVCC_FLAGS = -O3 -arch=sm_89 -std=c++17
+CUDA_ARCH ?= 89
+NVCC_ARCH_FLAGS = -gencode arch=compute_$(CUDA_ARCH),code=sm_$(CUDA_ARCH) \
+                  -gencode arch=compute_$(CUDA_ARCH),code=compute_$(CUDA_ARCH)
+NVCC_FLAGS = -O3 -std=c++17 --use_fast_math $(NVCC_ARCH_FLAGS)
 DEBUG_FLAGS = -g -G -lineinfo
 
 # 目录
@@ -24,7 +27,7 @@ $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
 $(TARGET): $(SRC_DIR)/benchmark.cu $(SRC_DIR)/v1_naive.cu $(SRC_DIR)/v2_tiled.cu
-	$(NVCC) $(NVCC_FLAGS) -I$(INC_DIR) $^ -o $@ -lcublas
+	$(NVCC) $(NVCC_FLAGS) -I$(INC_DIR) $(SRC_DIR)/benchmark.cu -o $@ -lcublas
 
 # 调试版本
 debug: NVCC_FLAGS = $(DEBUG_FLAGS)
@@ -54,3 +57,5 @@ help:
 	@echo "  make test_v1- 单独测试 V1"
 	@echo "  make test_v2- 单独测试 V2"
 	@echo "  make clean  - 清理编译文件"
+	@echo "  例: make CUDA_ARCH=89"
+	@echo "  例: make CUDA_ARCH=120 (需 nvcc 支持)"

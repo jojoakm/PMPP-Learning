@@ -87,6 +87,9 @@ final_project/
 # 编译
 make
 
+# 指定架构编译（RTX 5070 Ti 建议）
+make CUDA_ARCH=89
+
 # 运行 benchmark
 ./benchmark
 

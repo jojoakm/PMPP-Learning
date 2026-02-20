@@ -1,4 +1,4 @@
-cu# 📚 PMPP 学习笔记与练习
+# 📚 PMPP 学习笔记与练习
 
 > Programming Massively Parallel Processors (4th Edition)
 > 
@@ -22,7 +22,8 @@ PMPP_Learning/
 ├── ch10_performance/          # 第10章：性能优化 ⭐重点
 ├── ch11_prefix_sum/           # 第11章：前缀和
 ├── ch12_histogram/            # 第12章：直方图
-└── ch13_floating_point/       # 第13章：浮点数
+├── ch13_floating_point/       # 第13章：浮点数
+└── ncu_learning/              # Nsight Compute 学习路线与练手项目
 ```
 
 ---
@@ -78,6 +79,10 @@ nvcc -o test test.cu && ./test
 - [CUDA C++ Programming Guide](https://docs.nvidia.com/cuda/cuda-c-programming-guide/)
 - [CUDA Best Practices Guide](https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/)
 - [Nsight Compute Documentation](https://docs.nvidia.com/nsight-compute/)
+- [30天 AI Infra 冲刺计划](./30_day_aiinfra_plan.md)
+- [每日打卡清单（超简版）](./day_checklist.md)
+- [CUDA + C++ Interview Lab（独立项目）](../cuda_cpp_interview_lab/README.md)
+- [NCU 学习目录](./ncu_learning/README.md)
 
 ---
 
